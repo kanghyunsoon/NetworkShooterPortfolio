@@ -4,6 +4,13 @@
 
 [플레이 영상](https://youtu.be/QH26UeeRWrM) · [리와인드 코드](Source/NetworkShooter/Private/Network/RewindHistoryComponent.cpp)
 
+<p>
+  <img src="https://img.shields.io/badge/Unreal_Engine_5.5-0E1128?style=flat-square&amp;logo=unrealengine&amp;logoColor=white" alt="Unreal Engine 5.5" />
+  <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white" alt="C++" />
+  <img src="https://img.shields.io/badge/Multiplayer_RPC-334155?style=flat-square" alt="Multiplayer RPC" />
+  <img src="https://img.shields.io/badge/Server--Side_Rewind-0F766E?style=flat-square" alt="Server-Side Rewind" />
+</p>
+
 ![리와인드 알고리즘](docs/images/rewind-algorithm.svg)
 
 ## 담당 파트
