@@ -1,0 +1,34 @@
+# Visual Studio / Rider
+.vs/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Unreal Engine이 다시 생성하는 디렉터리
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# 플랫폼별 빌드 산출물
+*.apk
+*.ipa
+*.pak
+*.pdb
+*.obj
+*.dll
+*.exe
+
+# 로컬 설정과 로그
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# 포트폴리오 저장소에는 외부 에셋을 포함하지 않음
+Content/

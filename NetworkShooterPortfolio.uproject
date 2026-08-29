@@ -1,0 +1,16 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.5",
+	"Category": "Portfolio",
+	"Description": "서버 권한 기반 명중 검증과 지연 보정을 재구현한 Unreal Engine C++ 포트폴리오",
+	"Modules": [
+		{
+			"Name": "NetworkShooter",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	]
+}
