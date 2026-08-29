@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="210" viewBox="0 0 1200 210" role="img" aria-labelledby="title desc">
+  <title id="title">리와인드 구현 수치</title>
+  <desc id="desc">1.25초 기록, 두 프레임 보간, 세 가지 무기 판정, 30헤르츠 투사체 경로 계산</desc>
+  <rect width="1200" height="210" rx="16" fill="#111d2d"/>
+  <g font-family="Pretendard, Apple SD Gothic Neo, Segoe UI, sans-serif" text-anchor="middle">
+    <g transform="translate(35,32)">
+      <rect width="265" height="146" rx="10" fill="#1c3048"/>
+      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">프레임 기록</text>
+      <text x="132.5" y="94" fill="#69e0bd" font-size="42" font-weight="700">1.25초</text>
+      <text x="132.5" y="122" fill="#d7e2f1" font-size="13">초과 기록은 꼬리부터 제거</text>
+    </g>
+    <g transform="translate(323,32)">
+      <rect width="265" height="146" rx="10" fill="#1c3048"/>
+      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">발사 시점 계산</text>
+      <text x="132.5" y="94" fill="#69e0bd" font-size="42" font-weight="700">2 프레임</text>
+      <text x="132.5" y="122" fill="#d7e2f1" font-size="13">Older와 Younger 사이 보간</text>
+    </g>
+    <g transform="translate(611,32)">
+      <rect width="265" height="146" rx="10" fill="#1c3048"/>
+      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">명중 재판정</text>
+      <text x="132.5" y="94" fill="#69e0bd" font-size="42" font-weight="700">3 방식</text>
+      <text x="132.5" y="122" fill="#d7e2f1" font-size="13">히트스캔 · 투사체 · 샷건</text>
+    </g>
+    <g transform="translate(899,32)">
+      <rect width="265" height="146" rx="10" fill="#1c3048"/>
+      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">투사체 경로 계산</text>
+      <text x="132.5" y="94" fill="#69e0bd" font-size="42" font-weight="700">30 Hz</text>
+      <text x="132.5" y="122" fill="#d7e2f1" font-size="13">PredictProjectilePath</text>
+    </g>
+  </g>
+</svg>

@@ -1,116 +1,116 @@
-# Network Shooter Portfolio
+# Server-Side Rewind 기반 TPS
 
-지연이 있는 멀티플레이 환경에서 클라이언트의 명중 시점을 서버가 다시 검증하도록 만든 Unreal Engine C++ 코드 포트폴리오입니다.
+서버가 캐릭터의 콜리전을 발사 시점으로 되돌린 뒤 명중을 판정하도록 구현했습니다.
 
-[플레이 영상 보기](https://youtu.be/QH26UeeRWrM)
+[플레이 영상](https://youtu.be/QH26UeeRWrM) · [리와인드 코드](Source/NetworkShooter/Private/Network/RewindHistoryComponent.cpp)
 
-![프로젝트 수치](docs/images/project-metrics.svg)
+![리와인드 알고리즘](docs/images/rewind-algorithm.svg)
 
-## 맡은 작업
+## 맡은 부분
 
-멀티플레이 전투의 네트워크 처리를 담당했습니다. 클라이언트와 서버의 시간 차이를 보정하고, 서버가 과거 캐릭터 위치를 복원해 명중 여부를 다시 계산하도록 구성했습니다.
+멀티플레이 전투의 지연 보상을 맡았습니다.
 
-기존 프로토타입 자료가 소실된 뒤 플레이 영상과 설계 기록을 기준으로 네트워크 핵심부를 Unreal Engine 5.5 코드로 재구현했습니다. 외부 에셋과 플러그인은 저장소에서 제외했습니다.
+- 클라이언트와 서버 시간 동기화
+- 캐릭터 콜리전 프레임 기록
+- 발사 시점의 콜리전 복원
+- 히트스캔, 투사체, 샷건 명중 재판정
+- 판정 이후 현재 콜리전 복구
 
-## 문제와 해결
+## 문제
 
-### 1. 클라이언트 발사 시각을 서버에서 그대로 사용할 수 없었습니다
+클라이언트 화면에서 맞은 총알이 서버에서는 빗나가는 경우가 있었습니다. 서버가 명중 요청을 받았을 때는 상대 캐릭터가 이미 다른 위치로 이동한 뒤였기 때문입니다.
 
-클라이언트와 서버는 서로 다른 월드 시간을 사용합니다. 클라이언트가 보낸 시각을 그대로 적용하면 지연 시간만큼 판정 위치가 어긋납니다.
+클라이언트가 보낸 명중 결과를 그대로 적용하지 않고, 서버가 발사 시점의 콜리전을 복원해 다시 판정하는 방식으로 해결했습니다.
 
-요청 왕복 시간을 측정해 편도 지연을 계산하고, 서버 수신 시각에 편도 지연을 더해 서버 현재 시각을 추정했습니다. 측정값이 한 번에 튀지 않도록 보정값에 `0.15` 비율의 평활화를 적용하고 `5초`마다 다시 동기화했습니다.
+## 콜리전을 되돌리는 순서
 
-관련 코드: [`NetworkClockComponent.cpp`](Source/NetworkShooter/Private/Network/NetworkClockComponent.cpp)
+1. 서버가 캐릭터의 콜리전 위치, 회전, 크기를 매 프레임 기록합니다.
+2. 기록은 최신 프레임이 앞에 오도록 이중 연결 리스트에 넣습니다.
+3. 발사 시각을 기준으로 앞뒤의 `Older`, `Younger` 프레임을 찾습니다.
+4. 두 프레임 사이의 위치와 크기는 `Lerp`, 회전은 `Slerp`로 계산합니다.
+5. 판정 직전 현재 콜리전 상태를 따로 저장합니다.
+6. 판정용 콜리전을 계산한 과거 위치로 옮깁니다.
+7. 캐릭터 메시 콜리전을 끄고 판정용 콜리전에만 Line Trace를 실행합니다.
+8. 머리와 몸통 중 어느 콜리전에 맞았는지 확인합니다.
+9. 판정이 끝나면 저장해 둔 현재 위치와 충돌 상태로 되돌립니다.
 
-### 2. 화면에서는 맞았지만 서버에서는 빗나가는 문제가 있었습니다
+```text
+Alpha = (HitTime - OlderTime) / (YoungerTime - OlderTime)
+Location = Lerp(Older.Location, Younger.Location, Alpha)
+Rotation = Slerp(Older.Rotation, Younger.Rotation, Alpha)
+```
 
-서버가 명중 요청을 받을 때는 대상 캐릭터가 이미 다른 위치로 이동한 뒤입니다. 현재 위치만 검사하면 네트워크 지연이 큰 플레이어일수록 명중 판정이 불리해집니다.
+프레임 기록은 `1.25초`만 유지합니다. 최신 프레임 추가와 오래된 프레임 제거는 각각 `O(1)`이고, 기록 범위보다 오래된 요청은 판정하지 않습니다.
 
-서버가 충돌 박스 상태를 `1.25초` 동안 이중 연결 리스트에 기록하도록 했습니다. 요청 시각을 감싸는 두 프레임을 찾고 위치·회전을 보간한 뒤, 충돌 박스를 해당 시점으로 이동시켜 판정합니다. 검사가 끝나면 즉시 현재 위치와 충돌 상태를 복구합니다.
+| 순서 | 함수 | 처리 내용 |
+| --- | --- | --- |
+| 기록 | `SaveCurrentFrame` | 콜리전 상태 저장, 지난 기록 제거 |
+| 탐색 | `TrySampleFrame` | 발사 시각 앞뒤 프레임 탐색 |
+| 보간 | `InterpolateFrames` | 발사 시점의 콜리전 계산 |
+| 적용 | `ApplyFrame` | 판정용 콜리전을 과거 위치로 이동 |
+| 판정 | `ConfirmHitscan`, `ConfirmProjectile`, `ConfirmShotgun` | 무기별 명중 검사 |
+| 복구 | `RestoreFrame` | 현재 콜리전과 충돌 상태 복구 |
 
 관련 코드: [`RewindHistoryComponent.cpp`](Source/NetworkShooter/Private/Network/RewindHistoryComponent.cpp)
 
-### 3. 무기마다 같은 판정 방식을 쓸 수 없었습니다
+## 시간 동기화
 
-히트스캔은 선분 검사로 끝나지만 투사체는 속도와 비행 시간이 필요하고, 샷건은 여러 펠릿의 명중 결과를 합산해야 합니다.
+클라이언트의 월드 시간을 서버에서 바로 사용하면 발사 시각이 맞지 않습니다. 요청을 보낸 시각과 응답을 받은 시각으로 왕복 시간을 구하고, 그 절반을 서버 수신 시각에 더했습니다.
 
-명중 검증 입구는 하나의 컴포넌트로 묶고 서버 내부 판정만 세 갈래로 나눴습니다.
+```text
+RTT = ClientReceiveTime - ClientSendTime
+EstimatedServerTime = ServerReceiveTime + RTT / 2
+```
 
-| 무기 유형 | 서버 재검증 방식 | 제한값 |
+측정값은 `5초`마다 갱신하고 이전 값에 `0.15` 비율로 반영했습니다.
+
+관련 코드: [`NetworkClockComponent.cpp`](Source/NetworkShooter/Private/Network/NetworkClockComponent.cpp)
+
+## 무기별 판정
+
+| 무기 | 리와인드 이후 판정 | 제한값 |
 | --- | --- | ---: |
-| 히트스캔 | 과거 충돌 박스에 선분 추적 | 최대 20,000 uu |
+| 히트스캔 | 총구와 조준점 사이 Line Trace | 최대 20,000 uu |
 | 투사체 | 초기 속도로 경로 재계산 | 30 Hz, 최대 30,000 uu/s |
-| 샷건 | 펠릿별 선분 추적 후 피해 합산 | 최대 16개 |
+| 샷건 | 펠릿별 Line Trace 후 피해 합산 | 최대 16개 |
+
+클라이언트는 대상, 발사 위치, 궤적, 발사 시각만 보냅니다. 피해량은 서버에만 두었습니다. 서버는 요청 시각, 거리, 투사체 속도, 펠릿 개수를 확인한 뒤 리와인드를 실행합니다.
 
 관련 코드: [`ValidatedWeaponComponent.cpp`](Source/NetworkShooter/Private/Combat/ValidatedWeaponComponent.cpp)
-
-### 4. 클라이언트가 피해량을 조작할 수 있었습니다
-
-클라이언트가 피해량까지 보내면 패킷 변조로 결과를 바꿀 수 있습니다. 클라이언트는 대상, 발사 위치, 판정 시각만 전달하고 피해량은 서버 설정값만 사용하도록 분리했습니다.
-
-서버는 판정 전에 요청 시각, 발사 거리, 투사체 속도, 펠릿 개수를 검사합니다. 조건을 통과하고 리와인드 결과가 명중일 때만 `ApplyDamage`를 호출합니다.
 
 ## 처리 흐름
 
 ```mermaid
 sequenceDiagram
     participant C as 클라이언트
-    participant T as 시간 동기화
-    participant S as 서버 검증
-    participant H as 프레임 기록
-    participant D as 피해 처리
+    participant S as 서버
+    participant R as 리와인드 컴포넌트
 
-    C->>T: 서버 시간 요청
-    T-->>C: 서버 수신 시각 반환
-    C->>C: 왕복 시간으로 서버 시각 추정
-    C->>S: 대상·궤적·추정 발사 시각 전달
-    S->>S: 시간·거리·속도·개수 검사
-    S->>H: 발사 시각의 프레임 요청
-    H->>H: 두 프레임 보간 후 충돌 박스 복원
-    H-->>S: 히트스캔·투사체·샷건 판정
-    S->>D: 서버 설정값으로 피해 적용
+    C->>S: 대상, 궤적, 발사 시각 전송
+    S->>S: 요청 범위 확인
+    S->>R: 발사 시각 프레임 요청
+    R->>R: 현재 콜리전 저장
+    R->>R: Older/Younger 탐색 및 보간
+    R->>R: 콜리전을 과거 위치로 이동
+    R->>R: 무기별 명중 판정
+    R->>R: 현재 콜리전 복구
+    R-->>S: 명중 부위 반환
+    S->>S: 서버 피해량 적용
 ```
+
+## 구현 수치
+
+![구현 수치](docs/images/rewind-metrics.svg)
 
 ## 플레이 화면
 
-| 이동 및 무기 배치 | 멀티플레이 캐릭터 | 전투 장면 |
+| 이동 | 멀티플레이 | 전투 |
 | --- | --- | --- |
 | ![이동 장면](docs/images/gameplay-movement.png) | ![멀티플레이 장면](docs/images/gameplay-multiplayer.png) | ![전투 장면](docs/images/gameplay-combat.png) |
 
-## 기술 스택
+## 코드 보기
 
-- Unreal Engine 5.5: 공개용 네트워크 코드 재구현
-- Unreal Engine 4.27: 기존 플레이 프로토타입 및 영상
-- C++: 캐릭터, 무기 요청 검증, 프레임 기록, 시간 동기화
-- Unreal RPC: `Server`, `Client`, `Reliable`, `Unreliable`
-- Replication: 서버 권한 체력과 `RepNotify`
-- Collision Query: 전용 `RewindHitBox` 채널 기반 선분 추적
-- Projectile Prediction: `PredictProjectilePath`를 이용한 투사체 재검증
-
-## 코드 구조
-
-```text
-Source/NetworkShooter
-├─ Public
-│  ├─ Character       서버 권한 체력과 리와인드 충돌 박스
-│  ├─ Combat          클라이언트 요청 및 서버 피해 검증
-│  ├─ Game            기본 게임 모드 연결
-│  ├─ Network         시간 동기화, 프레임 구조, 리와인드
-│  └─ Player          시간 동기화 컴포넌트 소유
-└─ Private            각 기능 구현
-```
-
-면접 코드 검토 순서는 `NetworkClockComponent` → `RewindHistoryComponent` → `ValidatedWeaponComponent` 순서로 보면 됩니다. 세 파일이 시간 보정, 과거 위치 복원, 서버 판정을 각각 담당합니다.
-
-자세한 설계와 예외 처리는 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)에 정리했습니다.
-
-## 저장소 범위
-
-이 저장소에는 C++ 소스와 설정, 직접 촬영한 플레이 화면만 포함합니다. 캐릭터·맵·무기·사운드 에셋, 빌드 결과물, 외부 세션 플러그인은 포함하지 않습니다. 따라서 플레이 가능한 배포본이 아니라 네트워크 코드 검토용 저장소입니다.
-
-## 표기
-
-- 포트폴리오 코드 작성 및 재구현: 강형순
-- Unreal Engine 및 관련 상표: Epic Games, Inc.
-- Unreal 기본 생성 파일의 Epic 저작권 문구는 원문을 유지했습니다.
-- 파일별 표기와 제외 범위: [`NOTICE.md`](NOTICE.md)
+- [`RewindHistoryComponent.cpp`](Source/NetworkShooter/Private/Network/RewindHistoryComponent.cpp): 프레임 기록, 보간, 콜리전 이동과 복구
+- [`NetworkClockComponent.cpp`](Source/NetworkShooter/Private/Network/NetworkClockComponent.cpp): 서버 시간 계산
+- [`ValidatedWeaponComponent.cpp`](Source/NetworkShooter/Private/Combat/ValidatedWeaponComponent.cpp): 요청 검사와 서버 피해 적용
+- [`ARCHITECTURE.md`](docs/ARCHITECTURE.md): 리와인드 처리 순서와 예외 조건

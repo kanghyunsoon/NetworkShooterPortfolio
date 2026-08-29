@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
+  <title id="title">서버 사이드 리와인드 알고리즘</title>
+  <desc id="desc">발사 시각 전후의 프레임을 보간하고 콜리전을 과거 위치로 이동해 명중을 판정한 뒤 현재 상태로 복구하는 과정</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1625"/>
+      <stop offset="1" stop-color="#172942"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#8aa4c5"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="500" rx="16" fill="url(#bg)"/>
+  <g font-family="Pretendard, Apple SD Gothic Neo, Segoe UI, sans-serif">
+    <text x="48" y="48" fill="#edf4ff" font-size="24" font-weight="700">콜리전을 발사 시점으로 되돌려 판정</text>
+    <text x="48" y="76" fill="#9fb2ca" font-size="15">서버 프레임 기록 범위 1.25초</text>
+
+    <text x="48" y="120" fill="#d7e2f1" font-size="16" font-weight="600">발사 시점 계산</text>
+    <line x1="82" y1="184" x2="1118" y2="184" stroke="#56708f" stroke-width="3"/>
+    <circle cx="112" cy="184" r="10" fill="#527091"/>
+    <circle cx="418" cy="184" r="13" fill="#58a6ff"/>
+    <circle cx="718" cy="184" r="13" fill="#58a6ff"/>
+    <circle cx="1088" cy="184" r="10" fill="#527091"/>
+    <line x1="568" y1="145" x2="568" y2="209" stroke="#69e0bd" stroke-width="4"/>
+    <path d="M556 145 L568 129 L580 145 Z" fill="#69e0bd"/>
+    <g text-anchor="middle">
+      <text x="112" y="218" fill="#8fa4bd" font-size="13">Oldest</text>
+      <text x="112" y="238" fill="#8fa4bd" font-size="12">t_now - 1.25s</text>
+      <text x="418" y="218" fill="#dce9f8" font-size="14" font-weight="600">Older</text>
+      <text x="568" y="112" fill="#69e0bd" font-size="15" font-weight="700">HitTime</text>
+      <text x="718" y="218" fill="#dce9f8" font-size="14" font-weight="600">Younger</text>
+      <text x="1088" y="218" fill="#8fa4bd" font-size="13">Newest</text>
+      <text x="1088" y="238" fill="#8fa4bd" font-size="12">t_now</text>
+    </g>
+
+    <rect x="330" y="258" width="476" height="52" rx="9" fill="#1d3653"/>
+    <text x="568" y="280" text-anchor="middle" fill="#dce9f8" font-size="14">Alpha = (HitTime - OlderTime) / (YoungerTime - OlderTime)</text>
+    <text x="568" y="301" text-anchor="middle" fill="#69e0bd" font-size="13">위치 Lerp · 회전 Slerp · 크기 Lerp</text>
+
+    <text x="48" y="354" fill="#d7e2f1" font-size="16" font-weight="600">콜리전 판정</text>
+    <g text-anchor="middle">
+      <rect x="48" y="382" width="210" height="72" rx="10" fill="#203754"/>
+      <text x="153" y="411" fill="#edf4ff" font-size="15" font-weight="600">현재 콜리전 저장</text>
+      <text x="153" y="435" fill="#9fb2ca" font-size="12">위치·회전·크기·충돌 상태</text>
+      <line x1="258" y1="418" x2="304" y2="418" stroke="#8aa4c5" stroke-width="2" marker-end="url(#arrow)"/>
+      <rect x="312" y="382" width="210" height="72" rx="10" fill="#234769"/>
+      <text x="417" y="411" fill="#edf4ff" font-size="15" font-weight="600">과거 콜리전 적용</text>
+      <text x="417" y="435" fill="#9fb2ca" font-size="12">판정용 박스만 이동</text>
+      <line x1="522" y1="418" x2="568" y2="418" stroke="#8aa4c5" stroke-width="2" marker-end="url(#arrow)"/>
+      <rect x="576" y="382" width="230" height="72" rx="10" fill="#23594f"/>
+      <text x="691" y="411" fill="#edf4ff" font-size="15" font-weight="600">서버 명중 판정</text>
+      <text x="691" y="435" fill="#9fd6c7" font-size="12">Hitscan · Projectile · Shotgun</text>
+      <line x1="806" y1="418" x2="852" y2="418" stroke="#8aa4c5" stroke-width="2" marker-end="url(#arrow)"/>
+      <rect x="860" y="382" width="210" height="72" rx="10" fill="#203754"/>
+      <text x="965" y="411" fill="#edf4ff" font-size="15" font-weight="600">현재 콜리전 복구</text>
+      <text x="965" y="435" fill="#9fb2ca" font-size="12">판정 이전 상태로 원복</text>
+      <line x1="1070" y1="418" x2="1110" y2="418" stroke="#8aa4c5" stroke-width="2" marker-end="url(#arrow)"/>
+      <circle cx="1140" cy="418" r="25" fill="#69e0bd"/>
+      <text x="1140" y="414" fill="#0d2b23" font-size="11" font-weight="700">피해</text>
+      <text x="1140" y="430" fill="#0d2b23" font-size="11" font-weight="700">적용</text>
+    </g>
+  </g>
+</svg>
