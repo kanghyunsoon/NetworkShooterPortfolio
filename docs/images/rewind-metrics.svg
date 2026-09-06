@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="210" viewBox="0 0 1200 210" role="img" aria-labelledby="title desc">
-  <title id="title">리와인드 구현 수치</title>
-  <desc id="desc">1.25초 기록, 두 프레임 보간, 세 가지 무기 판정, 30헤르츠 투사체 경로 계산</desc>
+  <title id="title">공개 코드의 리와인드 기본값과 처리 구조</title>
+  <desc id="desc">기본 기록 시간 1.25초, 앞뒤 프레임 보간, 무기별 검사 경로 3종, 투사체 계산 주기 30헤르츠. 성능 측정 결과가 아닙니다.</desc>
   <rect width="1200" height="210" rx="16" fill="#111d2d"/>
   <g font-family="Pretendard, Apple SD Gothic Neo, Segoe UI, sans-serif" text-anchor="middle">
     <g transform="translate(35,32)">
       <rect width="265" height="146" rx="10" fill="#1c3048"/>
-      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">프레임 기록</text>
+      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">기본 기록 시간</text>
       <text x="132.5" y="94" fill="#69e0bd" font-size="42" font-weight="700">1.25초</text>
       <text x="132.5" y="122" fill="#d7e2f1" font-size="13">초과 기록은 꼬리부터 제거</text>
     </g>
@@ -17,9 +17,9 @@
     </g>
     <g transform="translate(611,32)">
       <rect width="265" height="146" rx="10" fill="#1c3048"/>
-      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">명중 재판정</text>
+      <text x="132.5" y="38" fill="#9fb2ca" font-size="15">무기별 검사 경로</text>
       <text x="132.5" y="94" fill="#69e0bd" font-size="42" font-weight="700">3 방식</text>
-      <text x="132.5" y="122" fill="#d7e2f1" font-size="13">히트스캔 · 투사체 · 샷건</text>
+      <text x="132.5" y="122" fill="#d7e2f1" font-size="13">투사체 명중은 보완 필요</text>
     </g>
     <g transform="translate(899,32)">
       <rect width="265" height="146" rx="10" fill="#1c3048"/>

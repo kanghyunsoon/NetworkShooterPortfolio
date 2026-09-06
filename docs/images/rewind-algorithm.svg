@@ -13,7 +13,7 @@
   <rect width="1200" height="500" rx="16" fill="url(#bg)"/>
   <g font-family="Pretendard, Apple SD Gothic Neo, Segoe UI, sans-serif">
     <text x="48" y="48" fill="#edf4ff" font-size="24" font-weight="700">콜리전을 발사 시점으로 되돌려 판정</text>
-    <text x="48" y="76" fill="#9fb2ca" font-size="15">서버 프레임 기록 범위 1.25초</text>
+    <text x="48" y="76" fill="#9fb2ca" font-size="15">공개 코드의 기본 기록 시간 1.25초</text>
 
     <text x="48" y="120" fill="#d7e2f1" font-size="16" font-weight="600">발사 시점 계산</text>
     <line x1="82" y1="184" x2="1118" y2="184" stroke="#56708f" stroke-width="3"/>
@@ -41,7 +41,7 @@
     <g text-anchor="middle">
       <rect x="48" y="382" width="210" height="72" rx="10" fill="#203754"/>
       <text x="153" y="411" fill="#edf4ff" font-size="15" font-weight="600">현재 콜리전 저장</text>
-      <text x="153" y="435" fill="#9fb2ca" font-size="12">위치·회전·크기·충돌 상태</text>
+      <text x="153" y="435" fill="#9fb2ca" font-size="12">위치·회전·크기 / 메시 충돌 모드</text>
       <line x1="258" y1="418" x2="304" y2="418" stroke="#8aa4c5" stroke-width="2" marker-end="url(#arrow)"/>
       <rect x="312" y="382" width="210" height="72" rx="10" fill="#234769"/>
       <text x="417" y="411" fill="#edf4ff" font-size="15" font-weight="600">과거 콜리전 적용</text>
@@ -53,7 +53,7 @@
       <line x1="806" y1="418" x2="852" y2="418" stroke="#8aa4c5" stroke-width="2" marker-end="url(#arrow)"/>
       <rect x="860" y="382" width="210" height="72" rx="10" fill="#203754"/>
       <text x="965" y="411" fill="#edf4ff" font-size="15" font-weight="600">현재 콜리전 복구</text>
-      <text x="965" y="435" fill="#9fb2ca" font-size="12">판정 이전 상태로 원복</text>
+      <text x="965" y="435" fill="#9fb2ca" font-size="12">위치 복구 · 판정용 박스 끄기</text>
       <line x1="1070" y1="418" x2="1110" y2="418" stroke="#8aa4c5" stroke-width="2" marker-end="url(#arrow)"/>
       <circle cx="1140" cy="418" r="25" fill="#69e0bd"/>
       <text x="1140" y="414" fill="#0d2b23" font-size="11" font-weight="700">피해</text>
