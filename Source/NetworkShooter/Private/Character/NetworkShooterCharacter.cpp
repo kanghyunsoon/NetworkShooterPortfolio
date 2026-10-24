@@ -31,12 +31,14 @@ void ANetworkShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Health = MaxHealth;
 	RewindHistory->RegisterHitBox(TEXT("Head"), HeadHitBox, true);
 	RewindHistory->RegisterHitBox(TEXT("Torso"), TorsoHitBox, false);
 
 	if (HasAuthority())
 	{
+		// 클라이언트는 BeginPlay 전에 복제된 체력을 받습니다. 여기서 덮어쓰면 늦게 들어온 클라이언트가 최대 체력으로 보게 됩니다.
+		Health = MaxHealth;
+
 		// 전용 서버는 화면에 그리지 않아서 기본 설정으로는 본 위치가 갱신되지 않습니다.
 		// 머리·몸통 판정 박스가 소켓을 따라가야 리와인드 기록이 애니메이션과 맞습니다.
 		GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;

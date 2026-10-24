@@ -8,6 +8,14 @@
 
 class UDamageType;
 
+/** 같은 발사 시각으로 들어온 보고가 같은 무기에서 나왔는지 구분합니다. */
+enum class EReportedShotKind : uint8
+{
+	Hitscan,
+	Projectile,
+	Shotgun
+};
+
 /**
  * 클라이언트가 보낸 발사 정보를 서버에서 검증한 뒤 피해를 적용합니다.
  * 피해량은 클라이언트 요청에 포함하지 않고 서버 설정값만 사용합니다.
@@ -78,14 +86,17 @@ private:
 		double HitServerTimeSeconds
 	) const;
 
+	/** 사수나 대상이 이미 쓰러졌으면 판정하지 않습니다. 체력이 없는 액터는 살아 있는 것으로 봅니다. */
+	static bool IsActorAlive(const AActor* Actor);
+
 	/** 서버가 알고 있는 조준 방향과 발사 방향의 차이를 확인합니다. */
 	bool IsAimPlausible(const FVector& ShotDirection, float ExtraToleranceDegrees = 0.0f) const;
 
 	/**
 	 * 발사 간격을 확인하고 이번 발사를 기록합니다.
-	 * 같은 발사 시각의 보고는 서로 다른 대상에 한해 MaxTargets까지 허용합니다.
+	 * 같은 발사 시각의 보고는 같은 종류의 발사이고 서로 다른 대상일 때만 MaxTargets까지 허용합니다.
 	 */
-	bool ConsumeShot(const AActor* Target, double HitServerTimeSeconds, int32 MaxTargets);
+	bool ConsumeShot(const AActor* Target, double HitServerTimeSeconds, int32 MaxTargets, EReportedShotKind ShotKind);
 
 	/** 서버가 측정한 왕복 지연으로 되돌릴 수 있는 최대 시간을 계산합니다. */
 	double GetMaximumRewindSeconds() const;
@@ -153,5 +164,6 @@ private:
 
 	double LastShotServerTimeSeconds = -1000.0;
 	double ShotBudget = 1.0;
+	EReportedShotKind LastShotKind = EReportedShotKind::Hitscan;
 	TArray<TWeakObjectPtr<const AActor>> TargetsHitThisShot;
 };

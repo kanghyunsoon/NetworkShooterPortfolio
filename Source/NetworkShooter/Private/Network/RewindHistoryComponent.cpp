@@ -19,6 +19,14 @@ URewindHistoryComponent::URewindHistoryComponent()
 	SetIsReplicatedByDefault(false);
 }
 
+void URewindHistoryComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 기록은 서버에서만 사용하므로 클라이언트에서는 매 프레임 틱을 돌리지 않습니다.
+	SetComponentTickEnabled(GetOwner() && GetOwner()->HasAuthority());
+}
+
 void URewindHistoryComponent::TickComponent(
 	const float DeltaTime,
 	const ELevelTick TickType,
@@ -356,7 +364,11 @@ FRewindCheckResult URewindHistoryComponent::ConfirmProjectile(
 	PathParams.ProjectileRadius = 5.0f;
 	PathParams.TraceChannel = RewindCollision::HitBoxChannel;
 	PathParams.bTraceWithCollision = true;
-	PathParams.ActorsToIgnore.Add(GetOwner());
+	// 판정 대상 자신을 제외하면 경로가 대상 박스를 통과해 명중이 확정되지 않습니다. 제외할 쪽은 사수입니다.
+	if (Shooter)
+	{
+		PathParams.ActorsToIgnore.Add(const_cast<AActor*>(Shooter));
+	}
 
 	FPredictProjectilePathResult PathResult;
 	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);

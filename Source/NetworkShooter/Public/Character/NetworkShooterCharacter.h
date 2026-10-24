@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="Character|Health")
 	float GetMaxHealth() const { return MaxHealth; }
 
+	UFUNCTION(BlueprintPure, Category="Character|Health")
+	bool IsAlive() const { return Health > 0.0f; }
+
 	UFUNCTION(BlueprintPure, Category="Network|Rewind")
 	URewindHistoryComponent* GetRewindHistory() const { return RewindHistory; }
 

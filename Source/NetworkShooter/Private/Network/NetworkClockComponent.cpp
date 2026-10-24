@@ -76,8 +76,8 @@ void UNetworkClockComponent::ClientReceiveTime_Implementation(
 	const double RoundTripSeconds = FMath::Max(0.0, ClientReceiveTimeSeconds - ClientSendTimeSeconds);
 	const double OneWaySeconds = RoundTripSeconds * 0.5;
 	const double EstimatedServerNow = ServerReceiveTimeSeconds + OneWaySeconds;
-	const float NewOffsetSeconds = static_cast<float>(EstimatedServerNow - ClientReceiveTimeSeconds);
-	const float NewOneWaySeconds = static_cast<float>(OneWaySeconds);
+	const double NewOffsetSeconds = EstimatedServerNow - ClientReceiveTimeSeconds;
+	const double NewOneWaySeconds = OneWaySeconds;
 
 	if (!bHasTimeSample)
 	{
@@ -90,11 +90,11 @@ void UNetworkClockComponent::ClientReceiveTime_Implementation(
 	SmoothedServerTimeOffsetSeconds = FMath::Lerp(
 		SmoothedServerTimeOffsetSeconds,
 		NewOffsetSeconds,
-		SmoothingFactor
+		static_cast<double>(SmoothingFactor)
 	);
 	SmoothedOneWayLatencySeconds = FMath::Lerp(
 		SmoothedOneWayLatencySeconds,
 		NewOneWaySeconds,
-		SmoothingFactor
+		static_cast<double>(SmoothingFactor)
 	);
 }
