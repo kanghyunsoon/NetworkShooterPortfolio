@@ -26,11 +26,11 @@ public:
 
 	/** 최근 측정값을 평활화한 편도 지연 시간입니다. */
 	UFUNCTION(BlueprintPure, Category="Network|Clock")
-	float GetEstimatedOneWayLatencySeconds() const { return SmoothedOneWayLatencySeconds; }
+	double GetEstimatedOneWayLatencySeconds() const { return SmoothedOneWayLatencySeconds; }
 
 	/** 디버그 화면에서 확인할 수 있도록 서버-클라이언트 시간 차이를 반환합니다. */
 	UFUNCTION(BlueprintPure, Category="Network|Clock")
-	float GetServerTimeOffsetSeconds() const { return SmoothedServerTimeOffsetSeconds; }
+	double GetServerTimeOffsetSeconds() const { return SmoothedServerTimeOffsetSeconds; }
 
 private:
 	/** 클라이언트가 요청을 보낸 시각을 서버로 전달합니다. */
@@ -49,11 +49,15 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Network|Clock", meta=(ClampMin="0.01", ClampMax="1.0"))
 	float SmoothingFactor = 0.15f;
 
+	/**
+	 * 서버와 클라이언트의 월드 시간 차이는 서버가 켜져 있던 시간만큼 커집니다.
+	 * float로 두면 하루쯤 지나 밀리초 단위가 깎이므로 double로 저장합니다.
+	 */
 	UPROPERTY(VisibleInstanceOnly, Category="Network|Clock")
-	float SmoothedServerTimeOffsetSeconds = 0.0f;
+	double SmoothedServerTimeOffsetSeconds = 0.0;
 
 	UPROPERTY(VisibleInstanceOnly, Category="Network|Clock")
-	float SmoothedOneWayLatencySeconds = 0.0f;
+	double SmoothedOneWayLatencySeconds = 0.0;
 
 	bool bHasTimeSample = false;
 	FTimerHandle SyncTimerHandle;
