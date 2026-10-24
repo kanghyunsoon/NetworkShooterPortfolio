@@ -32,25 +32,31 @@ public:
 	/** 기록할 충돌 박스를 등록합니다. 치명 부위 여부는 판정 배율에 사용됩니다. */
 	void RegisterHitBox(FName Name, UBoxComponent* HitBox, bool bCritical);
 
-	/** 히트스캔 무기의 선분과 과거 충돌 박스가 만났는지 확인합니다. */
+	/**
+	 * 히트스캔 무기의 선분과 과거 충돌 박스가 만났는지 확인합니다.
+	 * 명중 지점까지 벽 같은 월드 지형이 막고 있으면 명중으로 인정하지 않습니다.
+	 */
 	FRewindCheckResult ConfirmHitscan(
 		const FVector& TraceStart,
 		const FVector& TraceEnd,
-		double HitServerTimeSeconds
+		double HitServerTimeSeconds,
+		const AActor* Shooter
 	);
 
 	/** 발사 시작점과 초기 속도로 투사체 경로를 다시 계산합니다. */
 	FRewindCheckResult ConfirmProjectile(
 		const FVector& TraceStart,
 		const FVector& InitialVelocity,
-		double HitServerTimeSeconds
+		double HitServerTimeSeconds,
+		const AActor* Shooter
 	);
 
 	/** 한 대상에게 향한 산탄 펠릿의 일반·치명 부위 명중 수를 집계합니다. */
 	FShotgunRewindResult ConfirmShotgun(
 		const FVector& TraceStart,
 		const TArray<FVector>& PelletTraceEnds,
-		double HitServerTimeSeconds
+		double HitServerTimeSeconds,
+		const AActor* Shooter
 	);
 
 	UFUNCTION(BlueprintPure, Category="Network|Rewind")
@@ -77,6 +83,12 @@ private:
 	void SetRegisteredHitBoxesForTrace(bool bEnabled);
 	bool IsCriticalHitComponent(const UPrimitiveComponent* Component) const;
 	FRewindCheckResult BuildResultFromHit(const FHitResult& HitResult) const;
+
+	/**
+	 * 리와인드 충돌 채널은 월드 지형을 무시하므로 벽 너머 명중을 따로 걸러야 합니다.
+	 * 사수와 대상 자신은 제외하고 Visibility 채널로 막힘 여부를 확인합니다.
+	 */
+	bool IsBlockedByWorld(const FVector& Start, const FVector& End, const AActor* Shooter) const;
 
 	UPROPERTY(EditDefaultsOnly, Category="Network|Rewind", meta=(ClampMin="0.25", ClampMax="3.0"))
 	float RecordWindowSeconds = 1.25f;

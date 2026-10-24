@@ -249,10 +249,23 @@ FRewindCheckResult URewindHistoryComponent::BuildResultFromHit(const FHitResult&
 	return Result;
 }
 
+bool URewindHistoryComponent::IsBlockedByWorld(const FVector& Start, const FVector& End, const AActor* Shooter) const
+{
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(RewindLineOfSight), false);
+	Params.AddIgnoredActor(GetOwner());
+	if (Shooter)
+	{
+		Params.AddIgnoredActor(Shooter);
+	}
+
+	return GetWorld()->LineTraceTestByChannel(Start, End, ECC_Visibility, Params);
+}
+
 FRewindCheckResult URewindHistoryComponent::ConfirmHitscan(
 	const FVector& TraceStart,
 	const FVector& TraceEnd,
-	const double HitServerTimeSeconds
+	const double HitServerTimeSeconds,
+	const AActor* Shooter
 )
 {
 	FRewindCheckResult Result;
@@ -295,13 +308,19 @@ FRewindCheckResult URewindHistoryComponent::ConfirmHitscan(
 		Character->GetMesh()->SetCollisionEnabled(MeshCollision);
 	}
 
+	if (Result.bConfirmed && IsBlockedByWorld(TraceStart, HitResult.ImpactPoint, Shooter))
+	{
+		Result = FRewindCheckResult();
+	}
+
 	return Result;
 }
 
 FRewindCheckResult URewindHistoryComponent::ConfirmProjectile(
 	const FVector& TraceStart,
 	const FVector& InitialVelocity,
-	const double HitServerTimeSeconds
+	const double HitServerTimeSeconds,
+	const AActor* Shooter
 )
 {
 	FRewindCheckResult Result;
@@ -349,13 +368,33 @@ FRewindCheckResult URewindHistoryComponent::ConfirmProjectile(
 		Character->GetMesh()->SetCollisionEnabled(MeshCollision);
 	}
 
+	if (Result.bConfirmed)
+	{
+		// 포물선 경로를 구간별로 나눠 명중 지점까지 지형에 막히지 않았는지 확인합니다.
+		FVector SegmentStart = TraceStart;
+		for (const FPredictProjectilePathPointData& Point : PathResult.PathData)
+		{
+			if (IsBlockedByWorld(SegmentStart, Point.Location, Shooter))
+			{
+				return FRewindCheckResult();
+			}
+			SegmentStart = Point.Location;
+		}
+
+		if (IsBlockedByWorld(SegmentStart, PathResult.HitResult.ImpactPoint, Shooter))
+		{
+			return FRewindCheckResult();
+		}
+	}
+
 	return Result;
 }
 
 FShotgunRewindResult URewindHistoryComponent::ConfirmShotgun(
 	const FVector& TraceStart,
 	const TArray<FVector>& PelletTraceEnds,
-	const double HitServerTimeSeconds
+	const double HitServerTimeSeconds,
+	const AActor* Shooter
 )
 {
 	FShotgunRewindResult Result;
@@ -383,6 +422,8 @@ FShotgunRewindResult URewindHistoryComponent::ConfirmShotgun(
 		Character->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
+	TArray<FVector, TInlineAllocator<16>> ConfirmedImpactPoints;
+	TArray<bool, TInlineAllocator<16>> ConfirmedCritical;
 	for (const FVector& PelletTraceEnd : PelletTraceEnds)
 	{
 		FHitResult HitResult;
@@ -399,13 +440,25 @@ FShotgunRewindResult URewindHistoryComponent::ConfirmShotgun(
 			continue;
 		}
 
-		PelletResult.bCritical ? ++Result.CriticalHitCount : ++Result.BodyHitCount;
+		ConfirmedImpactPoints.Add(HitResult.ImpactPoint);
+		ConfirmedCritical.Add(PelletResult.bCritical);
 	}
 
 	RestoreFrame(PresentFrame);
 	if (Character && Character->GetMesh())
 	{
 		Character->GetMesh()->SetCollisionEnabled(MeshCollision);
+	}
+
+	// 지형 검사는 현재 프레임으로 되돌린 뒤 합니다. 대상과 사수는 검사에서 제외됩니다.
+	for (int32 Index = 0; Index < ConfirmedImpactPoints.Num(); ++Index)
+	{
+		if (IsBlockedByWorld(TraceStart, ConfirmedImpactPoints[Index], Shooter))
+		{
+			continue;
+		}
+
+		ConfirmedCritical[Index] ? ++Result.CriticalHitCount : ++Result.BodyHitCount;
 	}
 
 	return Result;
