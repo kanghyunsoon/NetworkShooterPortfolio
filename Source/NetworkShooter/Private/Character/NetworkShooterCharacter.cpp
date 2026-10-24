@@ -4,6 +4,7 @@
 
 #include "Combat/ValidatedWeaponComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Network/RewindHistoryComponent.h"
 
@@ -36,6 +37,9 @@ void ANetworkShooterCharacter::BeginPlay()
 
 	if (HasAuthority())
 	{
+		// 전용 서버는 화면에 그리지 않아서 기본 설정으로는 본 위치가 갱신되지 않습니다.
+		// 머리·몸통 판정 박스가 소켓을 따라가야 리와인드 기록이 애니메이션과 맞습니다.
+		GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 		OnTakeAnyDamage.AddDynamic(this, &ANetworkShooterCharacter::HandleDamage);
 	}
 }
