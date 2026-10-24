@@ -92,6 +92,19 @@ EstimatedServerTime = ServerReceiveTime + RTT / 2
 - [`ValidatedWeaponComponent.cpp`](Source/NetworkShooter/Private/Combat/ValidatedWeaponComponent.cpp): 요청 검사와 서버 피해 적용
 - [`ARCHITECTURE.md`](docs/ARCHITECTURE.md): 처리 순서와 예외 조건
 
+## 자동화 테스트
+
+| 테스트 | 확인하는 내용 |
+| --- | --- |
+| `NetworkShooter.Rewind.World` | 테스트 월드에 캐릭터를 두고 이동시킨 뒤, 과거 시각 판정·기록 범위 밖 거부·판정 후 박스 복구·투사체 명중·벽 너머 거부·펠릿 집계·체력 0 처리 |
+| `NetworkShooter.Combat.ShotRate` | 발사 간격, 프레임 오차 허용, 평균 연사 속도, 같은 발사의 대상 수, 종류가 다른 보고 섞기 거부 |
+
+```text
+UnrealEditor-Cmd.exe NetworkShooterPortfolio.uproject -ExecCmds="Automation RunTests NetworkShooter;Quit" -TestExit="Automation Test Queue Empty" -unattended -nullrhi
+```
+
+UE 5.8 에디터 빌드에서 두 테스트가 통과하는 것을 확인했습니다. 투사체 경로가 판정 대상을 제외하던 이전 코드로 되돌리면 `NetworkShooter.Rewind.World`의 투사체 검사가 실패합니다.
+
 ## 플레이 화면
 
 | 이동 | 멀티플레이 | 전투 |
