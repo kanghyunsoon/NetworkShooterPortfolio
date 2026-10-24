@@ -2,6 +2,7 @@
 
 #include "Combat/ValidatedWeaponComponent.h"
 
+#include "Character/NetworkShooterCharacter.h"
 #include "GameFramework/DamageType.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerState.h"
@@ -65,6 +66,11 @@ bool UValidatedWeaponComponent::IsRequestPlausible(
 		return false;
 	}
 
+	if (!IsActorAlive(OwnerPawn) || !IsActorAlive(Target))
+	{
+		return false;
+	}
+
 	// 클라이언트가 고른 시각을 그대로 믿으면 대상이 가장 노출됐던 순간을 골라 보낼 수 있습니다.
 	// 되돌릴 수 있는 시간은 서버가 잰 이 플레이어의 지연 시간으로 제한합니다.
 	const double ServerNow = GetWorld()->GetTimeSeconds();
@@ -84,6 +90,12 @@ bool UValidatedWeaponComponent::IsRequestPlausible(
 	}
 
 	return Target->FindComponentByClass<URewindHistoryComponent>() != nullptr;
+}
+
+bool UValidatedWeaponComponent::IsActorAlive(const AActor* Actor)
+{
+	const ANetworkShooterCharacter* Character = Cast<ANetworkShooterCharacter>(Actor);
+	return !Character || Character->IsAlive();
 }
 
 double UValidatedWeaponComponent::GetMaximumRewindSeconds() const
@@ -114,13 +126,20 @@ bool UValidatedWeaponComponent::IsAimPlausible(const FVector& ShotDirection, con
 	return FVector::DotProduct(AimDirection, Direction) >= FMath::Cos(FMath::DegreesToRadians(MaxAngleDegrees));
 }
 
-bool UValidatedWeaponComponent::ConsumeShot(const AActor* Target, const double HitServerTimeSeconds, const int32 MaxTargets)
+bool UValidatedWeaponComponent::ConsumeShot(
+	const AActor* Target,
+	const double HitServerTimeSeconds,
+	const int32 MaxTargets,
+	const EReportedShotKind ShotKind
+)
 {
 	// 같은 발사에서 여러 대상을 맞힌 보고는 허용하지만 같은 대상을 두 번 보고할 수는 없습니다.
+	// 종류가 다른 보고를 같은 시각으로 섞으면 히트스캔 한 발에 산탄 대상 수를 덧붙일 수 있어 거부합니다.
 	if (FMath::IsNearlyEqual(HitServerTimeSeconds, LastShotServerTimeSeconds, static_cast<double>(SameShotToleranceSeconds)))
 	{
 		TargetsHitThisShot.RemoveAll([](const TWeakObjectPtr<const AActor>& Hit) { return !Hit.IsValid(); });
-		if (TargetsHitThisShot.Num() >= MaxTargets ||
+		if (ShotKind != LastShotKind ||
+			TargetsHitThisShot.Num() >= MaxTargets ||
 			TargetsHitThisShot.ContainsByPredicate([Target](const TWeakObjectPtr<const AActor>& Hit) { return Hit.Get() == Target; }))
 		{
 			return false;
@@ -148,6 +167,7 @@ bool UValidatedWeaponComponent::ConsumeShot(const AActor* Target, const double H
 
 	ShotBudget = Budget - 1.0;
 	LastShotServerTimeSeconds = HitServerTimeSeconds;
+	LastShotKind = ShotKind;
 	TargetsHitThisShot.Reset();
 	TargetsHitThisShot.Add(Target);
 	return true;
@@ -186,7 +206,7 @@ void UValidatedWeaponComponent::ServerReportHitscan_Implementation(
 	const FVector Direction = TraceEnd - TraceStart;
 	if (Direction.SizeSquared() > FMath::Square(MaximumTraceDistance) ||
 		!IsAimPlausible(Direction) ||
-		!ConsumeShot(Target, HitServerTimeSeconds, 1))
+		!ConsumeShot(Target, HitServerTimeSeconds, 1, EReportedShotKind::Hitscan))
 	{
 		return;
 	}
@@ -209,7 +229,7 @@ void UValidatedWeaponComponent::ServerReportProjectile_Implementation(
 	if (!IsRequestPlausible(Target, TraceStart, HitServerTimeSeconds) ||
 		InitialVelocity.SizeSquared() > FMath::Square(MaximumProjectileSpeed) ||
 		!IsAimPlausible(InitialVelocity) ||
-		!ConsumeShot(Target, HitServerTimeSeconds, 1))
+		!ConsumeShot(Target, HitServerTimeSeconds, 1, EReportedShotKind::Projectile))
 	{
 		return;
 	}
@@ -253,7 +273,7 @@ void UValidatedWeaponComponent::ServerReportShotgun_Implementation(
 		CheckedTraceEnds.Add(TraceEnd);
 	}
 
-	if (!ConsumeShot(Target, HitServerTimeSeconds, MaximumShotgunTargets))
+	if (!ConsumeShot(Target, HitServerTimeSeconds, MaximumShotgunTargets, EReportedShotKind::Shotgun))
 	{
 		return;
 	}
