@@ -98,12 +98,13 @@ EstimatedServerTime = ServerReceiveTime + RTT / 2
 | --- | --- |
 | `NetworkShooter.Rewind.World` | 테스트 월드에 캐릭터를 두고 이동시킨 뒤, 과거 시각 판정·기록 범위 밖 거부·판정 후 박스 복구·투사체 명중·벽 너머 거부·펠릿 집계·체력 0 처리 |
 | `NetworkShooter.Combat.ShotRate` | 발사 간격, 프레임 오차 허용, 평균 연사 속도, 같은 발사의 대상 수, 종류가 다른 보고 섞기 거부 |
+| `NetworkShooter.Combat.ServerReport` | GameMode가 있는 서버 월드에서 히트스캔·산탄·투사체 보고를 처리해 피해 적용, 재전송·연사 초과·오래된/미래 시각·먼 시작점·조준 이탈·자기 자신·벽 너머·쓰러진 대상과 사수 요청 거부 |
 
 ```text
 UnrealEditor-Cmd.exe NetworkShooterPortfolio.uproject -ExecCmds="Automation RunTests NetworkShooter;Quit" -TestExit="Automation Test Queue Empty" -unattended -nullrhi
 ```
 
-UE 5.8 에디터 빌드에서 두 테스트가 통과하는 것을 확인했습니다. 투사체 경로가 판정 대상을 제외하던 이전 코드로 되돌리면 `NetworkShooter.Rewind.World`의 투사체 검사가 실패합니다.
+UE 5.8 에디터 빌드에서 세 테스트가 통과하는 것을 확인했습니다. 투사체 경로가 판정 대상을 제외하던 이전 코드로 되돌리면 `NetworkShooter.Rewind.World`의 투사체 검사가 실패합니다.
 
 ## 플레이 화면
 
