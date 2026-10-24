@@ -56,6 +56,9 @@ public:
 	);
 
 private:
+	/** 발사 간격 검사는 자동화 테스트에서 직접 확인합니다. */
+	friend class FValidatedWeaponShotRateTest;
+
 	UFUNCTION(Server, Reliable)
 	void ServerReportHitscan(
 		AActor* Target,
