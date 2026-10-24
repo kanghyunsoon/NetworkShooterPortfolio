@@ -23,6 +23,8 @@ class NETWORKSHOOTER_API URewindHistoryComponent : public UActorComponent
 public:
 	URewindHistoryComponent();
 
+	virtual void BeginPlay() override;
+
 	virtual void TickComponent(
 		float DeltaTime,
 		ELevelTick TickType,
